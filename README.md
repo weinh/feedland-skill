@@ -193,10 +193,6 @@ MIT License
 
 欢迎提交 Issue 和 Pull Request！
 
-## 作者
-
-yonglelaoren
-
 ## 致谢
 
 - [feedparser](https://github.com/kurtmckee/feedparser)
