@@ -4,7 +4,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Dict, Callable, Any
 from .feed_parser import FeedParser, FeedResult
-from .tracker import FeedTracker
+from .filter import Filter
 from .opml_parser import FeedInfo
 from threading import Lock
 
@@ -17,7 +17,7 @@ class ParallelFeedProcessor:
     def __init__(
         self,
         feed_parser: FeedParser,
-        tracker: FeedTracker,
+        filter: Filter,
         max_workers: int = 10
     ):
         """
@@ -25,13 +25,13 @@ class ParallelFeedProcessor:
 
         Args:
             feed_parser: Feed 解析器
-            tracker: Feed 跟踪器
+            filter: 文章过滤器
             max_workers: 最大工作线程数
         """
         self.feed_parser = feed_parser
-        self.tracker = tracker
+        self.filter = filter
         self.max_workers = max_workers
-        self._lock = Lock()  # 用于线程安全地更新 tracker
+        self._lock = Lock()  # 用于线程安全地更新 filter
 
     def process_feeds_parallel(
         self,
@@ -112,7 +112,7 @@ class ParallelFeedProcessor:
             result = self.feed_parser.parse_feed(feed_info)
 
             if result.success and result.articles:
-                # 更新 tracker
+                # 更新 filter
                 with self._lock:
                     # 找到最新的文章时间戳
                     latest_timestamp = None
@@ -122,7 +122,7 @@ class ParallelFeedProcessor:
                                 latest_timestamp = article["published"]
 
                     if latest_timestamp:
-                        self.tracker.update_timestamp(feed_info.url, latest_timestamp)
+                        self.filter.update_timestamp(feed_info.url, latest_timestamp)
 
             return result
 
@@ -139,7 +139,7 @@ class ParallelFeedProcessor:
         """保存历史记录（线程安全）"""
         with self._lock:
             try:
-                self.tracker.save_history()
+                self.filter.save_history()
             except Exception as e:
                 logger.error(f"保存历史记录失败: {e}")
 

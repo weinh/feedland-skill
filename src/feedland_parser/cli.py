@@ -11,8 +11,7 @@ from typing import Dict, Any, List
 from .config import Config, DEFAULT_CONFIG
 from .opml_parser import OPMLParser
 from .article_extractor import ArticleExtractor
-from .tracker import FeedTracker
-from .deduplicator import Deduplicator
+from .filter import Filter
 from .feed_parser import FeedParser
 from .parallel_processor import ParallelFeedProcessor
 from .logger import setup_logger
@@ -134,8 +133,8 @@ def main() -> int:
 
         # 2. 加载历史记录
         logger.info("加载历史记录...")
-        tracker = FeedTracker(config)
-        tracker.load_history()
+        filter = Filter(config)
+        filter.load_history()
 
         # 3. 创建黑名单（每次启动都是空的）
         from .domain_blacklist import DomainBlacklist
@@ -155,14 +154,13 @@ def main() -> int:
 
         # 5. 初始化处理器
         article_extractor = ArticleExtractor(blacklist=blacklist)
-        deduplicator = Deduplicator(tracker)
-        feed_parser = FeedParser(article_extractor, deduplicator)
+        feed_parser = FeedParser(article_extractor, filter)
 
         # 6. 并行处理 feeds
         logger.info(f"开始并行处理 {len(feed_infos)} 个 feeds...")
         parallel_processor = ParallelFeedProcessor(
             feed_parser,
-            tracker,
+            filter,
             max_workers=config.threads
         )
 

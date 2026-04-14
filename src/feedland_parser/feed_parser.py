@@ -6,7 +6,7 @@ from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
 from .article_extractor import ArticleExtractor, ArticleContent
-from .deduplicator import Deduplicator
+from .filter import Filter
 from .opml_parser import FeedInfo
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class FeedParser:
     def __init__(
         self,
         article_extractor: ArticleExtractor,
-        deduplicator: Deduplicator,
+        filter: Filter,
         timeout: int = 10,
         max_articles: int = 5,
         max_retries: int = 3
@@ -38,13 +38,13 @@ class FeedParser:
 
         Args:
             article_extractor: 文章提取器
-            deduplicator: 去重器
+            filter: 文章过滤器
             timeout: 请求超时时间（秒）
             max_articles: 每个 feed 最多提取的文章数
             max_retries: 最大重试次数
         """
         self.article_extractor = article_extractor
-        self.deduplicator = deduplicator
+        self.filter = filter
         self.timeout = timeout
         self.max_articles = max_articles
         self.max_retries = max_retries
@@ -139,8 +139,8 @@ class FeedParser:
 
         # 获取该 feed 的最后获取时间
         last_timestamp = None
-        if hasattr(self.deduplicator, 'tracker') and self.deduplicator.tracker:
-            last_timestamp = self.deduplicator.tracker.get_last_timestamp(feed_info.url)
+        if self.filter:
+            last_timestamp = self.filter.get_last_timestamp(feed_info.url)
 
         for entry in feed_data.entries:
             # 检查是否已经处理了足够的文章

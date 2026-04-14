@@ -7,8 +7,7 @@ from .config import Config
 from .opml_parser import OPMLParser
 from .feed_parser import FeedParser
 from .article_extractor import ArticleExtractor
-from .tracker import FeedTracker
-from .deduplicator import Deduplicator
+from .filter import Filter
 from .parallel_processor import ParallelFeedProcessor
 
 __all__ = [
@@ -16,7 +15,6 @@ __all__ = [
     "OPMLParser",
     "FeedParser",
     "ArticleExtractor",
-    "FeedTracker",
-    "Deduplicator",
+    "Filter",
     "ParallelFeedProcessor",
 ]
