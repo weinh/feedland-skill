@@ -687,12 +687,16 @@ class ArticleExtractor:
         Returns:
             文章内容
         """
+        # 只有网络错误才加入黑名单（下次大概率还不通，跳过省时）
+        # 内容提取失败不拉黑（可能是临时页面问题，下次可能正常）
+        is_network_error = reason and reason.startswith("网络错误")
+
         if description and len(description) >= 50 and self._is_content_valid(description):
             logger.info(f"✅ 使用描述内容回退 ({len(description)} 字符): {article_url}")
 
-            # 添加到黑名单（因为 URL 提取失败）
-            if self.blacklist is not None:
+            if is_network_error and self.blacklist is not None:
                 self.blacklist.add_to_blacklist(article_url, reason=reason)
+                logger.info(f"🚫 网络错误，加入黑名单: {article_url}")
 
             return ArticleContent(
                 title=title or "Unknown",
@@ -704,9 +708,10 @@ class ArticleExtractor:
                 extraction_method="description-fallback"
             )
 
-        # 没有有效描述
-        if self.blacklist is not None:
+        # 没有有效描述时，网络错误才拉黑
+        if is_network_error and self.blacklist is not None:
             self.blacklist.add_to_blacklist(article_url, reason=f"{reason}，且无有效描述")
+            logger.info(f"🚫 网络错误且无有效描述，加入黑名单: {article_url}")
 
         return ArticleContent(
             title=title or "Unknown",
