@@ -4,6 +4,8 @@ schema: spec-driven
 # 这些信息会在创建文档时展示给 AI
 # 添加技术栈、约定、风格指南、领域知识等
 context: |
+  语言：中文（简体）
+  所有产出物必须用简体中文撰写。
   技术栈：Python 3.11+、BeautifulSoup4、Newspaper3k、Feedparser
   依赖：requests、lxml、hashlib（用于去重）
 
@@ -41,6 +43,11 @@ rules:
   specs:
     - 明确定义 feed 解析、内容提取和去重的需求
     - 包含格式错误的 feed、网络错误和重复检测的场景
+    - 规范文档使用中文编写
+    - 使用清晰的章节结构（背景、方案、实施计划）
+    - 包含明确的验收标准
+    - 使用 Given/When/Then 格式编写场景
+    - 在创新之前先借鉴现有模式
   design:
     - 清晰记录去重策略
     - 解释 BeautifulSoup 和 Newspaper3k 之间的集成

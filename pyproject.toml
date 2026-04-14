@@ -34,6 +34,7 @@ dependencies = [
     "lxml-html-clean>=0.1.0",
     "python-dateutil>=2.8.2",
     "cloudscraper>=1.2.71",
+    "readability-lxml>=0.8.1",  # Readability 算法，用于智能提取正文
 ]
 
 [project.optional-dependencies]
