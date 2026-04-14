@@ -202,6 +202,7 @@ class FeedParser:
                     "published": article_content.published,
                     "author": article_content.author,
                     "content": article_content.content,
+                    "images": article_content.images or [],
                 }
 
                 articles.append(article)
