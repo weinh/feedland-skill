@@ -13,7 +13,8 @@ logger = logging.getLogger(__name__)
 # 默认配置
 DEFAULT_CONFIG = {
     "log_days": 3,         # 日志保持天数
-    "result_file": "output/results.json",  # 结果输出文件
+    "log_dir": "~/.feedland/logs",   # 日志目录
+    "result_file": "~/.feedland/results.json",  # 结果输出文件
 }
 
 
@@ -174,6 +175,16 @@ class Config:
     def result_file(self, value: str) -> None:
         """设置结果输出文件路径"""
         self._config["result_file"] = value
+
+    @property
+    def log_dir(self) -> str:
+        """获取日志目录"""
+        return self._config.get("log_dir", DEFAULT_CONFIG["log_dir"])
+
+    @log_dir.setter
+    def log_dir(self, value: str) -> None:
+        """设置日志目录"""
+        self._config["log_dir"] = value
 
     @property
     def his(self) -> Dict[str, str]:

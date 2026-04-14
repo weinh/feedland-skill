@@ -3,6 +3,7 @@
 import argparse
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Dict, Any, List
@@ -68,17 +69,23 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_logging(log_days: int = None, verbose: bool = False, quiet: bool = False) -> None:
+def setup_logging(log_days: int = None, log_dir: str = None, verbose: bool = False, quiet: bool = False) -> None:
     """
     设置滚动日志
     
     Args:
         log_days: 日志保持天数，默认从配置读取
+        log_dir: 日志目录，默认从配置读取
         verbose: 是否显示详细日志
         quiet: 是否只显示错误日志
     """
+    import os
     if log_days is None:
         log_days = DEFAULT_CONFIG["log_days"]
+    if log_dir is None:
+        log_dir = os.path.expanduser(DEFAULT_CONFIG["log_dir"])
+    else:
+        log_dir = os.path.expanduser(log_dir)
     
     level = logging.INFO
     if verbose:
@@ -87,7 +94,7 @@ def setup_logging(log_days: int = None, verbose: bool = False, quiet: bool = Fal
         level = logging.ERROR
     
     # 使用滚动日志
-    setup_logger("feedland", log_dir="output/logs", days=log_days, level=level)
+    setup_logger("feedland", log_dir=log_dir, days=log_days, level=level)
     
     # 第三方库日志设置为 WARNING，减少噪音
     logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -108,8 +115,8 @@ def main() -> int:
         config = Config(args.config)
         config.load()
 
-        # 2. 设置日志（使用配置中的 log_days）
-        setup_logging(log_days=config.log_days, verbose=args.verbose, quiet=args.quiet)
+        # 2. 设置日志（使用配置中的 log_days 和 log_dir）
+        setup_logging(log_days=config.log_days, log_dir=config.log_dir, verbose=args.verbose, quiet=args.quiet)
         
         # 获取 logger
         logger = logging.getLogger("feedland")
@@ -178,7 +185,7 @@ def main() -> int:
         output = generate_output(results)
 
         # 8. 保存结果到 JSON 文件
-        result_file = config.result_file
+        result_file = os.path.expanduser(config.result_file)
         Path(result_file).parent.mkdir(parents=True, exist_ok=True)
         with open(result_file, 'w', encoding='utf-8') as f:
             json.dump(output, f, ensure_ascii=False, indent=2)
