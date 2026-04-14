@@ -10,6 +10,13 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+# 默认配置
+DEFAULT_CONFIG = {
+    "log_days": 3,         # 日志保持天数
+    "result_file": "output/results.json",  # 结果输出文件
+}
+
+
 class Config:
     """配置管理类，用于读取和保存配置文件"""
 
@@ -147,6 +154,26 @@ class Config:
     def threads(self, value: int) -> None:
         """设置线程数"""
         self._config["threads"] = value
+
+    @property
+    def log_days(self) -> int:
+        """获取日志保持天数"""
+        return self._config.get("log_days", DEFAULT_CONFIG["log_days"])
+
+    @log_days.setter
+    def log_days(self, value: int) -> None:
+        """设置日志保持天数"""
+        self._config["log_days"] = value
+
+    @property
+    def result_file(self) -> str:
+        """获取结果输出文件路径"""
+        return self._config.get("result_file", DEFAULT_CONFIG["result_file"])
+
+    @result_file.setter
+    def result_file(self, value: str) -> None:
+        """设置结果输出文件路径"""
+        self._config["result_file"] = value
 
     @property
     def his(self) -> Dict[str, str]:

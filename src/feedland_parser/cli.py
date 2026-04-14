@@ -4,23 +4,21 @@ import argparse
 import json
 import logging
 import sys
+from pathlib import Path
 from typing import Dict, Any, List
 
-from .config import Config
+from .config import Config, DEFAULT_CONFIG
 from .opml_parser import OPMLParser
 from .article_extractor import ArticleExtractor
 from .tracker import FeedTracker
 from .deduplicator import Deduplicator
 from .feed_parser import FeedParser
 from .parallel_processor import ParallelFeedProcessor
+from .logger import setup_logger
 
 __version__ = "1.0.0"
 
-# 配置日志
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
+# 初始化日志（后面会根据配置重新设置）
 logger = logging.getLogger(__name__)
 
 
@@ -70,20 +68,30 @@ def parse_arguments() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setup_logging(verbose: bool, quiet: bool) -> None:
+def setup_logging(log_days: int = None, verbose: bool = False, quiet: bool = False) -> None:
     """
-    设置日志级别
-
+    设置滚动日志
+    
     Args:
+        log_days: 日志保持天数，默认从配置读取
         verbose: 是否显示详细日志
         quiet: 是否只显示错误日志
     """
+    if log_days is None:
+        log_days = DEFAULT_CONFIG["log_days"]
+    
+    level = logging.INFO
     if verbose:
-        logging.getLogger().setLevel(logging.DEBUG)
+        level = logging.DEBUG
     elif quiet:
-        logging.getLogger().setLevel(logging.ERROR)
-    else:
-        logging.getLogger().setLevel(logging.INFO)
+        level = logging.ERROR
+    
+    # 使用滚动日志
+    setup_logger("feedland", log_dir="output/logs", days=log_days, level=level)
+    
+    # 第三方库日志设置为 WARNING，减少噪音
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("requests").setLevel(logging.WARNING)
 
 
 def main() -> int:
@@ -94,13 +102,21 @@ def main() -> int:
         退出码（0 表示成功，非 0 表示失败）
     """
     args = parse_arguments()
-    setup_logging(args.verbose, args.quiet)
 
     try:
         # 1. 加载配置
-        logger.info("加载配置...")
         config = Config(args.config)
         config.load()
+
+        # 2. 设置日志（使用配置中的 log_days）
+        setup_logging(log_days=config.log_days, verbose=args.verbose, quiet=args.quiet)
+        
+        # 获取 logger
+        logger = logging.getLogger("feedland")
+        
+        logger.info("=" * 50)
+        logger.info("FeedLand 摘要提取工具启动")
+        logger.info("=" * 50)
 
         # 验证配置
         if not config.validate():
@@ -161,8 +177,12 @@ def main() -> int:
         logger.info("生成输出...")
         output = generate_output(results)
 
-        # 8. 输出 JSON
-        print(json.dumps(output, indent=2, ensure_ascii=False))
+        # 8. 保存结果到 JSON 文件
+        result_file = config.result_file
+        Path(result_file).parent.mkdir(parents=True, exist_ok=True)
+        with open(result_file, 'w', encoding='utf-8') as f:
+            json.dump(output, f, ensure_ascii=False, indent=2)
+        logger.info(f"✅ 结果已保存到: {result_file}")
 
         # 9. 显示摘要
         summary = parallel_processor.get_summary(results)
