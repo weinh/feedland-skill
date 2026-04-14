@@ -4,7 +4,6 @@ import logging
 import threading
 from typing import Dict, List, Optional
 from datetime import datetime
-from urllib.parse import urlparse, parse_qs, urlunparse
 from .config import Config
 
 logger = logging.getLogger(__name__)
@@ -100,32 +99,6 @@ class Filter:
         except Exception as e:
             logger.warning(f"检查文章是否新文章时发生错误: {e}")
             return True
-
-    def normalize_url(self, url: str) -> str:
-        """标准化 URL（移除跟踪参数）"""
-        try:
-            parsed = urlparse(url)
-            tracking_params = {
-                "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
-                "fbclid", "gclid", "msclkid", "_ga", "_gid", "ref", "source", "via"
-            }
-            query_params = parse_qs(parsed.query)
-            filtered_params = {
-                k: v for k, v in query_params.items()
-                if k.lower() not in tracking_params
-            }
-            normalized = urlunparse((
-                parsed.scheme,
-                parsed.netloc,
-                parsed.path,
-                parsed.params,
-                "&".join(f"{k}={v[0]}" for k, v in filtered_params.items()),
-                parsed.fragment
-            ))
-            return normalized
-        except Exception as e:
-            logger.warning(f"标准化 URL 失败: {e}")
-            return url
 
     def filter_articles(self, feed_url: str, articles: List[dict]) -> List[dict]:
         """根据时间戳过滤文章，只保留新文章"""
