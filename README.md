@@ -52,6 +52,9 @@ source .venv/bin/activate  # Linux/macOS
 {
   "url": "https://feedland.com/opml?screenname=yonglelaoren",
   "threads": 10,
+  "log_days": 3,
+  "log_dir": "~/.feedland/logs",
+  "result_file": "~/.feedland/results.json",
   "his": {}
 }
 ```
@@ -60,7 +63,10 @@ source .venv/bin/activate  # Linux/macOS
 
 - `url`: Feedland OPML 接口地址（必需）
 - `threads`: 并行处理的线程数（可选，默认值：`min(10, cpu_count() * 2 + 1)`）
-- `his`: 每个 feed 的最后提取时间映射（自动维护）
+- `log_days`: 日志文件保留天数（可选，默认值：3）
+- `log_dir`: 日志文件存储目录（可选，默认值：`~/.feedland/logs`）
+- `result_file`: 结果文件保存路径（可选，默认值：`~/.feedland/results.json`）
+- `his`: 每个 feed 的最后提取时间映射（自动维护，无需手动设置）
 
 **配置文件优先级**：
 
@@ -82,6 +88,18 @@ uvx yonglelaoren-feedland-parser
 uvx yonglelaoren-feedland-parser --config /path/to/config.json
 ```
 
+### 详细日志模式
+
+```bash
+uvx yonglelaoren-feedland-parser --verbose
+```
+
+### 静默模式（只显示错误）
+
+```bash
+uvx yonglelaoren-feedland-parser --quiet
+```
+
 ### 查看版本
 
 ```bash
@@ -96,6 +114,8 @@ uvx yonglelaoren-feedland-parser --help
 
 ## 输出格式
 
+### 响应结构
+
 工具会输出 JSON 格式的提取结果，仅包含成功提取的文章：
 
 ```json
@@ -103,20 +123,49 @@ uvx yonglelaoren-feedland-parser --help
   {
     "feed_url": "https://example.com/feed.xml",
     "feed_title": "Example Feed",
+    "feed_type": "rss",
     "articles": [
       {
         "title": "文章标题",
         "url": "https://example.com/article1",
         "published": "2025-02-09T10:00:00Z",
         "author": "作者",
-        "content": "文章主要内容..."
+        "content": "文章主要内容...",
+        "images": [
+          "https://example.com/image1.jpg",
+          "https://example.com/image2.jpg"
+        ]
       }
     ]
   }
 ]
 ```
 
-提取失败的信息会记录到日志中，不会影响 JSON 输出。
+### 字段说明
+
+**Feed 级别字段**：
+
+- `feed_url`: Feed 的 URL 地址
+- `feed_title`: Feed 的标题
+- `feed_type`: Feed 类型（`rss` 或 `atom`）
+- `articles`: 文章列表数组
+
+**Article 级别字段**：
+
+- `title`: 文章标题
+- `url`: 文章链接
+- `published`: 发布时间（ISO 8601 格式）
+- `author`: 作者（可选）
+- `content`: 文章正文内容
+- `images`: 文章中的图片链接数组（可选）
+
+### 输出特点
+
+- 仅包含成功提取的文章
+- 每个 feed 最多包含 5 篇最新文章
+- 文章按发布时间倒序排列
+- 提取失败的信息会记录到日志中，不会影响 JSON 输出
+- 结果会自动保存到配置文件中指定的 `result_file` 路径
 
 ## 依赖
 
