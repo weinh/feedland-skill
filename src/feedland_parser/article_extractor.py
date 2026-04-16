@@ -432,16 +432,6 @@ class ArticleExtractor:
                                     seen.add(absolute)
                                     images.append(absolute)
 
-            # 策略 4: 兜底
-            if len(images) < 3:
-                for img in soup.find_all("img"):
-                    src = self._get_image_src(img)
-                    if src and self._is_valid_image(src, img):
-                        absolute = urljoin(url, src)
-                        if absolute not in seen:
-                            seen.add(absolute)
-                            images.append(absolute)
-
             return images[:max_images]
 
         except Exception as e:
