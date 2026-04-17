@@ -16,7 +16,7 @@ from .feed_parser import FeedParser
 from .parallel_processor import ParallelFeedProcessor
 from .logger import setup_logger
 
-__version__ = "1.0.3"
+__version__ = "1.1.0"
 
 # 初始化日志（后面会根据配置重新设置）
 logger = logging.getLogger(__name__)
@@ -136,10 +136,13 @@ def main() -> int:
         filter = Filter(config)
         filter.load_history()
 
-        # 3. 创建黑名单（每次启动都是空的）
+        # 3. 创建黑名单（包含常驻域名）
         from .domain_blacklist import DomainBlacklist
         logger.info("初始化域名黑名单...")
-        blacklist = DomainBlacklist()
+        # 常驻黑名单：搜狗微信搜索页（返回的是搜索结果而非正文）
+        PERMANENT_BLACKLIST = {"weixin.sogou.com"}
+        blacklist = DomainBlacklist(initial_blacklist=PERMANENT_BLACKLIST)
+        logger.info(f"常驻黑名单已加载: {PERMANENT_BLACKLIST}")
 
         # 4. 解析 OPML
         logger.info("解析 OPML...")

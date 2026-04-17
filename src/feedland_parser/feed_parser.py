@@ -156,6 +156,16 @@ class FeedParser:
                 if not article_url:
                     logger.debug(f"文章缺少 URL，跳过: {entry.get('title', 'Unknown')}")
                     continue
+                
+                # 如果 URL 是搜狗搜索页，从 HTML 内容中提取真实原文 URL
+                if "weixin.sogou.com" in article_url:
+                    real_url = self._extract_real_url_from_entry(entry)
+                    if real_url:
+                        logger.debug(f"从搜狗搜索页提取真实 URL: {real_url[:80]}...")
+                        article_url = real_url
+                    else:
+                        logger.warning(f"无法从搜狗搜索页提取真实 URL，跳过: {entry.get('title', 'Unknown')}")
+                        continue
 
                 # 获取发布日期
                 published = self._parse_published_date(entry)
@@ -216,6 +226,46 @@ class FeedParser:
 
         logger.info(f"从 {feed_info.url} 解析了 {len(articles)} 篇文章（共检查了 {total_processed} 个条目）")
         return articles
+
+    def _extract_real_url_from_entry(self, entry) -> Optional[str]:
+        """
+        从 feed entry 的 HTML 内容中提取真实文章 URL
+        
+        针对 weixin.sogou.com 等聚合源，entry.link 是搜狗搜索页，
+        真正的原文 URL 藏在 entry.summary 的 <a href="mp.weixin.qq.com/..."> 里
+        
+        Args:
+            entry: feed 条目
+            
+        Returns:
+            真实文章 URL，如果提取失败返回 None
+        """
+        try:
+            from bs4 import BeautifulSoup
+        except ImportError:
+            return None
+            
+        # 优先从 summary 取，其次从 content 取
+        html = entry.get("summary", "")
+        if not html:
+            content_val = entry.get("content")
+            if isinstance(content_val, list) and len(content_val) > 0:
+                html = content_val[0].get("value", "") if isinstance(content_val[0], dict) else str(content_val[0])
+            elif isinstance(content_val, str):
+                html = content_val
+        
+        if not html:
+            return None
+            
+        soup = BeautifulSoup(html, "html.parser")
+        
+        # 找所有 mp.weixin.qq.com 链接
+        for a in soup.find_all("a", href=True):
+            href = a["href"]
+            if "mp.weixin.qq.com" in href:
+                return href
+        
+        return None
 
     def _get_description(self, entry: feedparser.FeedParserDict) -> Optional[str]:
         """
