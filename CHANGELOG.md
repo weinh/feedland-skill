@@ -5,6 +5,39 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.5] - 2026-04-18
+
+### Added
+- HTML tag stripping for RSS description content when fallback is used
+- Automatic HTML entity decoding (nbsp, lt, gt, amp, quot, mdash, hellip, etc.)
+
+### Changed
+- Content from description fallback is now cleaned of HTML tags before saving
+- Preserves plain text content from extraction methods (Readability, Newspaper3k, etc.)
+
+### Technical Details
+- New `_strip_html_tags()` function in article_extractor module
+- FeedParser checks `extraction_method` field: strips HTML only for "description-fallback"
+- HTML entity decoding handles common RSS entities
+- Text cleanup removes extra whitespace and blank lines after tag removal
+
+### Test Coverage
+- 14 new tests for HTML stripping functionality
+- 3 integration tests for FeedParser HTML cleaning
+- All tests passing (27/27)
+
+## [1.2.4] - 2026-04-18
+
+### Added
+- Version number in startup log message for better tracking
+
+### Changed
+- Startup banner now includes version information to help identify which version is running
+
+### Technical Details
+- Added `logger.info(f"版本: {__version__}")` to startup sequence
+- Helps users identify cache issues from old versions
+
 ## [1.2.3] - 2026-04-18
 
 ### Removed

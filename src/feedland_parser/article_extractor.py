@@ -97,6 +97,49 @@ def _clean_text(text: str) -> str:
     return "\n".join(cleaned_lines)
 
 
+def _strip_html_tags(text: str) -> str:
+    """
+    移除 HTML 标签，保留纯文本
+
+    Args:
+        text: 可能包含 HTML 标签的文本
+
+    Returns:
+        清理后的纯文本
+    """
+    if not text:
+        return ""
+
+    # 简单的 HTML 标签移除（适用于 RSS 描述内容）
+    import re
+
+    # 移除 HTML 标签
+    text = re.sub(r'<[^>]+>', '', text)
+
+    # 解码 HTML 实体
+    html_entities = {
+        '&nbsp;': ' ',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&amp;': '&',
+        '&quot;': '"',
+        '&#39;': "'",
+        '&apos;': "'",
+        '&mdash;': '—',
+        '&ndash;': '–',
+        '&hellip;': '…',
+        '&copy;': '©',
+        '&reg;': '®',
+        '&trade;': '™',
+    }
+
+    for entity, char in html_entities.items():
+        text = text.replace(entity, char)
+
+    # 清理多余空白
+    return _clean_text(text)
+
+
 def _is_content_valid(content: str) -> bool:
     """检查内容是否有效"""
     if not content or len(content) < 50:

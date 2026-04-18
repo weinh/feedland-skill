@@ -220,13 +220,20 @@ class FeedParser:
                     logger.warning(f"文章内容提取失败: {article_url}")
                     continue
 
+                # 清理内容：如果使用描述回退，移除 HTML 标签
+                content = article_content.content
+                if article_content.extraction_method == "description-fallback":
+                    from .article_extractor import _strip_html_tags
+                    content = _strip_html_tags(content)
+                    logger.debug(f"已清理描述中的 HTML 标签")
+
                 # 创建文章字典
                 article = {
                     "title": article_content.title,
                     "url": article_content.url,
                     "published": article_content.published,
                     "author": article_content.author,
-                    "content": article_content.content,
+                    "content": content,
                     "images": article_content.images or [],
                     "_id": article_id,  # 内部使用，用于去重
                     "_id_type": id_type,  # ID 类型（published/guid/link/hash）

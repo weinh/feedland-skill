@@ -118,9 +118,10 @@ def main() -> int:
         
         # 获取 logger
         logger = logging.getLogger("feedland")
-        
+
         logger.info("=" * 50)
         logger.info("FeedLand 摘要提取工具启动")
+        logger.info(f"版本: {__version__}")
         logger.info("=" * 50)
 
         # 验证配置
