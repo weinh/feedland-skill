@@ -16,7 +16,7 @@ from .feed_parser import FeedParser
 from .parallel_processor import ParallelFeedProcessor
 from .logger import setup_logger
 
-__version__ = "1.1.0"
+__version__ = "1.1.2"
 
 # 初始化日志（后面会根据配置重新设置）
 logger = logging.getLogger(__name__)
