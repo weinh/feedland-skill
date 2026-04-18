@@ -342,14 +342,14 @@ class ArticleExtractor:
                         extraction_method=strategy.name.lower().replace("+", "-")
                     )
             except NetworkError as e:
-                logger.warning(f"⚠️ {strategy.name} 网络错误: {e}")
+                logger.warning(f"⚠️ {strategy.name} 网络错误: {article_url} - {e}")
                 # 网络错误立即停止
                 return self._fallback(article_url, title, published, author, description, f"网络错误: {e}")
             except Exception as e:
                 logger.debug(f"❌ {strategy.name} 失败: {e}")
 
         # 全部失败，使用描述回退
-        logger.error(f"❌ 所有提取方法失败")
+        logger.error(f"❌ 所有提取方法失败: {article_url}")
         return self._fallback(article_url, title, published, author, description, "所有提取方法失败")
 
     def _fallback(self, article_url: str, title: Optional[str], published: Optional[str],

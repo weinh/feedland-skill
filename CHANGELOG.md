@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-04-18
+
+### Fixed
+- **Critical**: Sogou WeChat search articles being skipped when real URL extraction failed
+  - Articles from `plink.anyfeeder.com/weixin/caozsay` and similar feeds now properly preserved
+  - Content is extracted from RSS description even when original WeChat URL is not found
+- Improved error logging to include URLs for better debugging
+  - All extraction method failures now show the problematic URL
+  - Network errors include both URL and error details
+  - Article parsing errors show URL and title for identification
+
+### Added
+- `extraction_method` field to article output for tracking how content was extracted
+- URL information to all critical error and warning log messages
+
+### Changed
+- Sogou WeChat search page handling: continue processing instead of skipping articles
+- Log level for failed real URL extraction: WARNING → DEBUG
+
+### Technical Details
+- FeedParser no longer skips articles when real URL extraction fails
+- ArticleExtractor now logs URLs in all error scenarios for better debugging
+- Enhanced error tracking with URL and title information
+
 ## [1.2.0] - 2026-04-18
 
 ### Added

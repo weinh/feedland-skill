@@ -182,8 +182,8 @@ class FeedParser:
                         logger.debug(f"从搜狗搜索页提取真实 URL: {real_url[:80]}...")
                         article_url = real_url
                     else:
-                        logger.warning(f"无法从搜狗搜索页提取真实 URL，跳过: {entry.get('title', 'Unknown')}")
-                        continue
+                        logger.debug(f"无法从搜狗搜索页提取真实 URL，使用搜狗链接: {entry.get('title', 'Unknown')}")
+                        # 不跳过，继续使用搜狗搜索页URL，文章内容仍然有价值
 
                 # 获取文章 ID 和发布时间
                 article_id, published, id_type = self.get_article_id(entry)
@@ -227,6 +227,7 @@ class FeedParser:
                     "author": article_content.author,
                     "content": article_content.content,
                     "images": article_content.images or [],
+                    "extraction_method": article_content.extraction_method,
                     "_id": article_id,  # 内部使用，用于去重
                     "_id_type": id_type,  # ID 类型（published/guid/link/hash）
                 }
@@ -234,7 +235,7 @@ class FeedParser:
                 articles.append(article)
 
             except Exception as e:
-                logger.warning(f"解析文章时发生错误: {e}")
+                logger.warning(f"解析文章时发生错误: {article_url} - {entry.get('title', 'Unknown')}")
                 continue
 
         # 按时间排序（只对已获取的文章排序）
