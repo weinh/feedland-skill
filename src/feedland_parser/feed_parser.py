@@ -212,7 +212,8 @@ class FeedParser:
                     title=title,
                     published=published,
                     author=author,
-                    description=description
+                    description=description,
+                    feed_name=feed_info.title
                 )
 
                 if not article_content.success or not article_content.content:

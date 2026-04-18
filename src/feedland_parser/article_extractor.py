@@ -311,14 +311,14 @@ class ArticleExtractor:
 
     def extract(self, article_url: str, title: Optional[str] = None,
                 published: Optional[str] = None, author: Optional[str] = None,
-                description: Optional[str] = None) -> ArticleContent:
+                description: Optional[str] = None, feed_name: Optional[str] = None) -> ArticleContent:
         """提取文章内容"""
 
         # 检查黑名单
         if self.blacklist and self.blacklist.is_blacklisted(article_url):
             domain = self.blacklist.get_domain_from_url(article_url)
             logger.info(f"⏭️  域名在黑名单中: {domain}")
-            return self._fallback(article_url, title, published, author, description, "域名在黑名单中")
+            return self._fallback(article_url, title, published, author, description, "域名在黑名单中", feed_name)
 
         logger.info(f"开始提取: {article_url}")
 
@@ -342,18 +342,21 @@ class ArticleExtractor:
                         extraction_method=strategy.name.lower().replace("+", "-")
                     )
             except NetworkError as e:
-                logger.warning(f"⚠️ {strategy.name} 网络错误: {article_url} - {e}")
+                feed_display = feed_name or "Unknown"
+                logger.warning(f"⚠️ {strategy.name} 网络错误: {article_url} - {feed_display} - {e}")
                 # 网络错误立即停止
-                return self._fallback(article_url, title, published, author, description, f"网络错误: {e}")
+                return self._fallback(article_url, title, published, author, description, f"网络错误: {e}", feed_name)
             except Exception as e:
                 logger.debug(f"❌ {strategy.name} 失败: {e}")
 
         # 全部失败，使用描述回退
-        logger.error(f"❌ 所有提取方法失败: {article_url}")
-        return self._fallback(article_url, title, published, author, description, "所有提取方法失败")
+        feed_display = feed_name or "Unknown"
+        logger.error(f"❌ 所有提取方法失败: {article_url} - {feed_display}")
+        return self._fallback(article_url, title, published, author, description, "所有提取方法失败", feed_name)
 
     def _fallback(self, article_url: str, title: Optional[str], published: Optional[str],
-                  author: Optional[str], description: Optional[str], reason: str) -> ArticleContent:
+                  author: Optional[str], description: Optional[str], reason: str,
+                  feed_name: Optional[str] = None) -> ArticleContent:
         """描述内容回退"""
         is_network_error = reason and reason.startswith("网络错误")
 

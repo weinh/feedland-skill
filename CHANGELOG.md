@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-04-18
+
+### Fixed
+- **Critical**: Logger configuration issue preventing module-specific logs from being written to files
+  - Article extraction logs (network errors, extraction failures) were only shown in console
+  - Now all module logs properly written to log files for post-analysis
+
+### Added
+- Feed name information in error logs for better issue tracking
+  - "All extraction methods failed" now shows: URL - Feed Name
+  - Network errors now show: URL - Feed Name - Error Details
+  - Easier to identify which RSS source is causing problems
+
+### Changed
+- Logger configuration: now uses root logger to capture all module logs
+  - `feedland_parser.article_extractor` logs now written to files
+  - `feedland_parser.feed_parser` logs now written to files
+  - All modules properly log to both console and file
+
+### Technical Details
+- **Root Logger**: Changed from named logger to root logger for comprehensive log capture
+- **Feed Name Tracking**: Added `feed_name` parameter to extraction methods
+- **Improved Error Context**: Error logs now include feed source identification
+- **Better Debugging**: All critical errors now include URL + Feed Name for tracking
+
 ## [1.2.1] - 2026-04-18
 
 ### Fixed
