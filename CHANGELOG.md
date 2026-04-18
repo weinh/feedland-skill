@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.3] - 2026-04-18
+
+### Removed
+- Unused blacklist management methods with no business value:
+  - `clear_blacklist()` - Only used in tests
+  - `cleanup_old_entries()` - No persistence, no cleanup needed
+  - `remove_from_blacklist()` - Temporary blacklist, manual removal unnecessary
+  - `to_dict()`/`from_dict()` - Persistence methods never used
+
+### Changed
+- **Code Simplification**: Removed 50+ lines of dead code from DomainBlacklist class
+- **Test Cleanup**: Removed 7 obsolete test cases for deleted methods
+- **Clearer Responsibilities**: DomainBlacklist now only handles core functionality (add, check, get)
+
+### Technical Details
+- Blacklist is runtime-only, resets on program restart
+- No persistence to config file or disk
+- Failed domains are tracked during execution but cleared on restart
+- This design is intentional - network errors are often temporary
+
 ## [1.2.2] - 2026-04-18
 
 ### Fixed

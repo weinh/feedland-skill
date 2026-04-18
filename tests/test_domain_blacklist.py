@@ -1,7 +1,7 @@
 """域名黑名单模块单元测试"""
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from src.feedland_parser.domain_blacklist import DomainBlacklist
 
 
@@ -82,35 +82,6 @@ class TestDomainBlacklist:
         assert result is False
         assert len(blacklist) == 1
 
-    def test_remove_from_blacklist(self):
-        """测试从黑名单移除域名"""
-        blacklist = DomainBlacklist()
-        blacklist.add_to_blacklist("example.com")
-
-        result = blacklist.remove_from_blacklist("example.com")
-
-        assert result is True
-        assert "example.com" not in blacklist
-        assert len(blacklist) == 0
-
-    def test_remove_nonexistent_domain(self):
-        """测试移除不存在的域名"""
-        blacklist = DomainBlacklist()
-        result = blacklist.remove_from_blacklist("example.com")
-
-        assert result is False
-
-    def test_clear_blacklist(self):
-        """测试清空黑名单"""
-        blacklist = DomainBlacklist()
-        blacklist.add_to_blacklist("example.com")
-        blacklist.add_to_blacklist("test.org")
-
-        blacklist.clear_blacklist()
-
-        assert len(blacklist) == 0
-        assert blacklist.get_blacklist() == set()
-
     def test_get_blacklist_metadata(self):
         """测试获取黑名单元数据"""
         blacklist = DomainBlacklist()
@@ -122,87 +93,6 @@ class TestDomainBlacklist:
         assert metadata["example.com"]["reason"] == "Test reason"
         assert metadata["example.com"]["fail_count"] == 1
         assert "added_at" in metadata["example.com"]
-
-    def test_to_dict(self):
-        """测试转换为字典"""
-        blacklist = DomainBlacklist()
-        blacklist.add_to_blacklist("example.com", reason="Test")
-        blacklist.add_to_blacklist("test.org")
-
-        data = blacklist.to_dict()
-
-        assert "domains" in data
-        assert "metadata" in data
-        assert "example.com" in data["domains"]
-        assert "test.org" in data["domains"]
-        assert len(data["domains"]) == 2
-
-    def test_from_dict(self):
-        """测试从字典创建"""
-        data = {
-            "domains": ["example.com", "test.org"],
-            "metadata": {
-                "example.com": {
-                    "added_at": datetime.now().isoformat(),
-                    "fail_count": 1,
-                    "reason": "Test"
-                }
-            }
-        }
-
-        blacklist = DomainBlacklist.from_dict(data)
-
-        assert len(blacklist) == 2
-        assert "example.com" in blacklist
-        assert "test.org" in blacklist
-
-    def test_from_dict_empty(self):
-        """测试从空字典创建"""
-        blacklist = DomainBlacklist.from_dict({})
-
-        assert len(blacklist) == 0
-
-    def test_from_dict_list_format(self):
-        """测试从列表格式创建（向后兼容）"""
-        data = ["example.com", "test.org"]
-        blacklist = DomainBlacklist.from_dict({"domains": data})
-
-        assert len(blacklist) == 2
-        assert "example.com" in blacklist
-        assert "test.org" in blacklist
-
-    def test_cleanup_old_entries(self):
-        """测试清理旧条目"""
-        blacklist = DomainBlacklist()
-
-        # 添加一个旧条目
-        old_date = datetime.now() - timedelta(days=40)
-        blacklist._blacklist_metadata["old.com"] = {
-            "added_at": old_date.isoformat(),
-            "fail_count": 1,
-            "reason": "Old"
-        }
-        blacklist._blacklist.add("old.com")
-
-        # 添加一个新条目
-        blacklist.add_to_blacklist("new.com")
-
-        # 清理 30 天前的条目
-        removed = blacklist.cleanup_old_entries(days=30)
-
-        assert removed == 1
-        assert "old.com" not in blacklist
-        assert "new.com" in blacklist
-
-    def test_cleanup_old_entries_none(self):
-        """测试清理旧条目（没有旧条目）"""
-        blacklist = DomainBlacklist()
-        blacklist.add_to_blacklist("new.com")
-
-        removed = blacklist.cleanup_old_entries(days=30)
-
-        assert removed == 0
-        assert "new.com" in blacklist
 
     def test_contains_operator(self):
         """测试 'in' 操作符"""
@@ -236,17 +126,6 @@ class TestDomainBlacklist:
 
         metadata = blacklist.get_blacklist_metadata()
         assert metadata["example.com"]["fail_count"] == 2
-
-    def test_remove_preserves_metadata(self):
-        """测试移除后元数据也被清理"""
-        blacklist = DomainBlacklist()
-        blacklist.add_to_blacklist("example.com")
-
-        assert len(blacklist.get_blacklist_metadata()) == 1
-
-        blacklist.remove_from_blacklist("example.com")
-
-        assert len(blacklist.get_blacklist_metadata()) == 0
 
     def test_www_prefix_removal(self):
         """测试 www. 前缀移除"""

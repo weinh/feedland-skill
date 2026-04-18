@@ -317,10 +317,10 @@ class ArticleExtractor:
         # 检查黑名单
         if self.blacklist and self.blacklist.is_blacklisted(article_url):
             domain = self.blacklist.get_domain_from_url(article_url)
-            logger.info(f"⏭️  域名在黑名单中: {domain}")
+            logger.debug(f"⏭️  域名在黑名单中: {domain}")
             return self._fallback(article_url, title, published, author, description, "域名在黑名单中", feed_name)
 
-        logger.info(f"开始提取: {article_url}")
+        logger.debug(f"开始提取: {article_url}")
 
         # 尝试各提取策略
         for strategy in self._strategies:
@@ -330,7 +330,7 @@ class ArticleExtractor:
 
                 if content and len(content) >= 100 and _is_content_valid(content):
                     images = self._extract_images(article_url)
-                    logger.info(f"✅ {strategy.name} 成功 ({len(content)} 字符)")
+                    logger.debug(f"✅ {strategy.name} 成功 ({len(content)} 字符)")
                     return ArticleContent(
                         title=title or "Unknown",
                         url=article_url,
@@ -361,7 +361,7 @@ class ArticleExtractor:
         is_network_error = reason and reason.startswith("网络错误")
 
         if description and len(description) >= 50 and _is_content_valid(description):
-            logger.info(f"✅ 描述回退 ({len(description)} 字符)")
+            logger.debug(f"✅ 描述回退 ({len(description)} 字符)")
 
             if is_network_error and self.blacklist:
                 self.blacklist.add_to_blacklist(article_url, reason=reason)

@@ -228,7 +228,6 @@ class FeedParser:
                     "author": article_content.author,
                     "content": article_content.content,
                     "images": article_content.images or [],
-                    "extraction_method": article_content.extraction_method,
                     "_id": article_id,  # 内部使用，用于去重
                     "_id_type": id_type,  # ID 类型（published/guid/link/hash）
                 }
