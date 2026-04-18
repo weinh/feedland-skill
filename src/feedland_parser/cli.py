@@ -15,8 +15,7 @@ from .filter import Filter
 from .feed_parser import FeedParser
 from .parallel_processor import ParallelFeedProcessor
 from .logger import setup_logger
-
-__version__ = "1.1.2"
+from . import __version__
 
 # 初始化日志（后面会根据配置重新设置）
 logger = logging.getLogger(__name__)
@@ -157,7 +156,7 @@ def main() -> int:
 
         # 5. 初始化处理器
         article_extractor = ArticleExtractor(blacklist=blacklist)
-        feed_parser = FeedParser(article_extractor, filter)
+        feed_parser = FeedParser(article_extractor, filter, timeout=10)
 
         # 6. 并行处理 feeds
         logger.info(f"开始并行处理 {len(feed_infos)} 个 feeds...")

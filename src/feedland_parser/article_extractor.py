@@ -149,6 +149,11 @@ class ExtractionStrategy:
             else:
                 response = session.get(url, timeout=self.timeout)
             response.raise_for_status()
+
+            # 修复编码检测问题：使用 apparent_encoding 而不是默认的 ISO-8859-1
+            if response.encoding == 'ISO-8859-1':
+                response.encoding = response.apparent_encoding or 'utf-8'
+
             return response.text
         except requests.exceptions.Timeout:
             raise NetworkError(f"{self.name} 请求超时")
