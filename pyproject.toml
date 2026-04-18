@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "yonglelaoren-feedland-parser"
-version = "1.0.3"
+version = "1.1.0"
 description = "从 Feedland OPML 解析和提取 RSS/Atom feeds 文章内容"
 readme = "README.md"
 requires-python = ">=3.11"

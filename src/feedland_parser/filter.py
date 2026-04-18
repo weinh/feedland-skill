@@ -47,17 +47,27 @@ class Filter:
             raise
 
     def get_last_timestamp(self, feed_url: str) -> Optional[str]:
-        """获取指定 feed 的最后提取时间"""
+        """获取指定 feed 的最后提取时间（兼容旧代码）"""
+        return self._history.get(feed_url)
+
+    def get_last_id(self, feed_url: str) -> Optional[str]:
+        """获取指定 feed 的最后处理 ID"""
         return self._history.get(feed_url)
 
     def update_timestamp(self, feed_url: str, timestamp: str) -> None:
-        """更新指定 feed 的最后提取时间"""
+        """更新指定 feed 的最后提取时间（兼容旧代码）"""
         with self._lock:
             self._history[feed_url] = timestamp
             logger.debug(f"更新 feed 时间戳: {feed_url} -> {timestamp}")
 
+    def update_id(self, feed_url: str, article_id: str) -> None:
+        """更新指定 feed 的最后处理 ID"""
+        with self._lock:
+            self._history[feed_url] = article_id
+            logger.debug(f"更新 feed ID: {feed_url} -> {article_id[:80]}...")
+
     def is_newer_than_last(self, feed_url: str, article_timestamp: str) -> bool:
-        """检查文章时间戳是否比记录的时间戳更新"""
+        """检查文章时间戳是否比记录的时间戳更新（兼容旧代码）"""
         last_timestamp = self.get_last_timestamp(feed_url)
         if not last_timestamp:
             return True
@@ -69,6 +79,21 @@ class Filter:
         except Exception as e:
             logger.warning(f"比较时间戳失败: {e}")
             return True
+
+    def is_newer_than_last_id(self, feed_url: str, article_id: str) -> bool:
+        """检查文章 ID 是否比记录的 ID 更新（支持时间戳比较）"""
+        last_id = self.get_last_id(feed_url)
+        if not last_id:
+            return True
+
+        # 尝试作为时间戳比较
+        try:
+            last_dt = datetime.fromisoformat(last_id.replace("Z", "+00:00"))
+            article_dt = datetime.fromisoformat(article_id.replace("Z", "+00:00"))
+            return article_dt > last_dt
+        except Exception:
+            # 不是时间戳，直接比较字符串
+            return article_id != last_id
 
     def get_feed_count(self) -> int:
         """获取跟踪的 feed 数量"""

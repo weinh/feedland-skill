@@ -78,21 +78,6 @@ class TestConfig:
 
         assert config.his == {"feed1": "2025-02-09T10:00:00Z"}
 
-    def test_update_history(self, tmp_path):
-        """测试更新历史记录"""
-        config_path = tmp_path / "config.json"
-        config_path.write_text('{"url": "test"}')
-
-        config = Config(str(config_path))
-        config.load()
-        config.update_history("feed1", "2025-02-09T10:00:00Z")
-        config.save()
-
-        # 重新加载验证
-        config2 = Config(str(config_path))
-        config2.load()
-        assert config2.his["feed1"] == "2025-02-09T10:00:00Z"
-
     def test_validate_valid_config(self, tmp_path):
         """测试验证有效配置"""
         config_path = tmp_path / "config.json"

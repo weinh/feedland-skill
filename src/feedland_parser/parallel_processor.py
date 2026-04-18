@@ -112,17 +112,20 @@ class ParallelFeedProcessor:
             result = self.feed_parser.parse_feed(feed_info)
 
             if result.success and result.articles:
-                # 更新 filter
+                # 更新 filter（使用最新文章的 ID）
                 with self._lock:
-                    # 找到最新的文章时间戳
-                    latest_timestamp = None
+                    # 找到第一篇文章的 ID（最新的文章）
+                    latest_id = None
+                    id_type = None
                     for article in result.articles:
-                        if article.get("published"):
-                            if not latest_timestamp or article["published"] > latest_timestamp:
-                                latest_timestamp = article["published"]
+                        if article.get("_id"):
+                            latest_id = article["_id"]
+                            id_type = article.get("_id_type", "unknown")
+                            break
 
-                    if latest_timestamp:
-                        self.filter.update_timestamp(feed_info.url, latest_timestamp)
+                    if latest_id:
+                        self.filter.update_id(feed_info.url, latest_id)
+                        logger.debug(f"更新 feed ID: {feed_info.url} -> {latest_id[:50]}... (类型: {id_type})")
 
             return result
 

@@ -2,6 +2,7 @@
 
 import logging
 import feedparser
+import hashlib
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
@@ -137,26 +138,26 @@ class FeedParser:
         articles = []
         total_processed = 0  # 已处理的条目总数
 
-        # 获取该 feed 的最后获取时间
-        last_timestamp = None
+        # 获取该 feed 的最后处理 ID
+        last_id = None
         if self.filter:
-            last_timestamp = self.filter.get_last_timestamp(feed_info.url)
+            last_id = self.filter.get_last_id(feed_info.url)
 
         for entry in feed_data.entries:
             # 检查是否已经处理了足够的文章
             if len(articles) >= self.max_articles:
                 logger.debug(f"已达到最大文章数限制 ({self.max_articles})，停止处理")
                 break
-            
+
             total_processed += 1
-            
+
             try:
                 # 获取文章 URL
                 article_url = entry.get("link")
                 if not article_url:
                     logger.debug(f"文章缺少 URL，跳过: {entry.get('title', 'Unknown')}")
                     continue
-                
+
                 # 如果 URL 是搜狗搜索页，从 HTML 内容中提取真实原文 URL
                 if "weixin.sogou.com" in article_url:
                     real_url = self._extract_real_url_from_entry(entry)
@@ -167,21 +168,22 @@ class FeedParser:
                         logger.warning(f"无法从搜狗搜索页提取真实 URL，跳过: {entry.get('title', 'Unknown')}")
                         continue
 
-                # 获取发布日期
-                published = self._parse_published_date(entry)
+                # 获取文章 ID 和发布时间（按优先级降级）
+                article_id, published, id_type = self.get_article_id(entry)
 
-                # 检查是否达到历史获取时间（不处理更旧的文章）
-                if last_timestamp and published:
-                    try:
-                        from datetime import datetime
-                        last_dt = datetime.fromisoformat(last_timestamp.replace('Z', '+00:00'))
-                        published_dt = datetime.fromisoformat(published.replace('Z', '+00:00'))
-                        
-                        if published_dt <= last_dt:
-                            logger.debug(f"文章发布时间 {published} 不晚于历史时间 {last_timestamp}，停止处理")
-                            break
-                    except Exception as e:
-                        logger.debug(f"比较日期时间失败: {e}")
+                # 检查是否已处理过该文章
+                if last_id:
+                    if last_id == article_id:
+                        logger.debug(f"文章 ID {article_id[:80]}... 已处理过，停止处理（ID 类型: {id_type}）")
+                        break
+                    # 如果 last_id 是时间戳，article_id 也是时间戳，则比较时间
+                    if id_type == "published" and self.filter:
+                        try:
+                            if not self.filter.is_newer_than_last_id(feed_info.url, article_id):
+                                logger.debug(f"文章 ID {article_id} 不晚于历史 ID，停止处理")
+                                break
+                        except Exception as e:
+                            logger.debug(f"比较 ID 失败: {e}")
 
                 # 获取文章标题
                 title = entry.get("title", "Unknown")
@@ -213,6 +215,8 @@ class FeedParser:
                     "author": article_content.author,
                     "content": article_content.content,
                     "images": article_content.images or [],
+                    "_id": article_id,  # 内部使用，用于去重
+                    "_id_type": id_type,  # ID 类型（published/guid/link/hash）
                 }
 
                 articles.append(article)
@@ -294,6 +298,44 @@ class FeedParser:
                     return value
         
         return None
+
+    def get_article_id(self, entry: feedparser.FeedParserDict) -> Tuple[Optional[str], Optional[str], str]:
+        """
+        获取文章唯一标识和发布时间，按优先级降级
+
+        Args:
+            entry: feed 条目
+
+        Returns:
+            (article_id, published, id_type) 三元组
+            - article_id: 文章唯一标识（用于去重）
+            - published: ISO 8601 格式的发布时间
+            - id_type: 使用的 ID 类型（"published"/"guid"/"link"/"hash"）
+        """
+        # 1. 优先使用 published（时间戳最可靠）
+        published = self._parse_published_date(entry)
+        if published:
+            return (published, published, "published")
+
+        # 2. 其次使用 guid（RSS 2.0 标准）
+        guid = entry.get("guid")
+        if guid:
+            logger.debug(f"使用 guid 作为文章 ID: {guid[:80]}...")
+            return (guid, None, "guid")
+
+        # 3. 最后使用 link（兜底方案）
+        link = entry.get("link")
+        if link:
+            logger.debug(f"使用 link 作为文章 ID: {link[:80]}...")
+            return (link, None, "link")
+
+        # 4. 兜底：使用 title + link 的 hash
+        title = entry.get("title", "")
+        link = entry.get("link", "")
+        hash_input = f"{title}{link}"
+        hash_id = hashlib.md5(hash_input.encode()).hexdigest()
+        logger.debug(f"使用 hash 作为文章 ID: {hash_id}")
+        return (hash_id, None, "hash")
 
     def _parse_published_date(self, entry: feedparser.FeedParserDict) -> Optional[str]:
         """

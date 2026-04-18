@@ -227,11 +227,17 @@ def generate_output(results: List) -> Dict[str, Any]:
 
     for result in results:
         if result.success and result.articles:
+            # 清理文章中的内部字段
+            clean_articles = []
+            for article in result.articles:
+                clean_article = {k: v for k, v in article.items() if not k.startswith("_")}
+                clean_articles.append(clean_article)
+
             feed_data = {
                 "feed_url": result.feed_info.url,
                 "feed_title": result.feed_info.title,
                 "feed_type": result.feed_info.feed_type,
-                "articles": result.articles,
+                "articles": clean_articles,
             }
             output.append(feed_data)
 
