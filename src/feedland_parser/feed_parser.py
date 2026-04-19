@@ -254,13 +254,13 @@ class FeedParser:
     def _extract_real_url_from_entry(self, entry) -> Optional[str]:
         """
         从 feed entry 的 HTML 内容中提取真实文章 URL
-        
+
         针对 weixin.sogou.com 等聚合源，entry.link 是搜狗搜索页，
         真正的原文 URL 藏在 entry.summary 的 <a href="mp.weixin.qq.com/..."> 里
-        
+
         Args:
             entry: feed 条目
-            
+
         Returns:
             真实文章 URL，如果提取失败返回 None
         """
@@ -268,27 +268,33 @@ class FeedParser:
             from bs4 import BeautifulSoup
         except ImportError:
             return None
-            
+
         # 优先从 summary 取，其次从 content 取
-        html = entry.get("summary", "")
-        if not html:
+        html_content = entry.get("summary", "")
+        if not html_content:
             content_val = entry.get("content")
             if isinstance(content_val, list) and len(content_val) > 0:
-                html = content_val[0].get("value", "") if isinstance(content_val[0], dict) else str(content_val[0])
+                html_content = content_val[0].get("value", "") if isinstance(content_val[0], dict) else str(content_val[0])
             elif isinstance(content_val, str):
-                html = content_val
-        
-        if not html:
+                html_content = content_val
+
+        if not html_content:
             return None
-            
-        soup = BeautifulSoup(html, "html.parser")
-        
+
+        # 处理可能的双重 HTML 实体编码（&amp;amp; -> &amp; -> &）
+        import html as html_module
+        html_content = html_module.unescape(html_content)
+
+        soup = BeautifulSoup(html_content, "html.parser")
+
         # 找所有 mp.weixin.qq.com 链接
         for a in soup.find_all("a", href=True):
             href = a["href"]
             if "mp.weixin.qq.com" in href:
+                # 再次解码 HTML 实体（确保双重编码被完全处理）
+                href = html_module.unescape(href)
                 return href
-        
+
         return None
 
     def _get_description(self, entry: feedparser.FeedParserDict) -> Optional[str]:

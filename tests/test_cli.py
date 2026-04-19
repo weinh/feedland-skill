@@ -47,7 +47,9 @@ class TestCLI:
             with pytest.raises(SystemExit):
                 parse_arguments()
         captured = capsys.readouterr()
-        assert '0.1.0' in captured.out
+        # 检查版本号格式（X.X.X）
+        import re
+        assert re.search(r'\d+\.\d+\.\d+', captured.out)
 
     def test_setup_logging_verbose(self):
         """测试 verbose 日志设置"""

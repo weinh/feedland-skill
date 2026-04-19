@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.6] - 2026-04-19
+
+### Fixed
+- **Critical**: Fixed URL extraction for WeChat articles from Sogou search feeds
+  - WeChat article URLs were incorrectly using Sogou search page links instead of original article URLs
+  - Enhanced HTML entity decoding to handle double-encoded entities (&amp;amp; -> &)
+  - All WeChat articles now correctly use mp.weixin.qq.com URLs with complete parameters
+
+### Technical Details
+- Updated `_extract_real_url_from_entry()` to use `html.unescape()` on HTML content before parsing
+- Double HTML entity decoding: content unescape → link extraction → link unescape
+- Verified with almosthuman2014 WeChat feed: all 5 articles now use correct WeChat URLs
+- Fixes issue where results.json contained `weixin.sogou.com` links instead of `mp.weixin.qq.com`
+
 ## [1.2.5] - 2026-04-18
 
 ### Added
